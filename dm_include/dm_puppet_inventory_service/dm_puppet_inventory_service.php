@@ -29,7 +29,7 @@ class dm_puppet_inventory_service extends device_module
 	 *
 	 * @return string
 	 **/
-	function title()
+	public static function title()
 	{
 		return 'Puppet Inventory Service';
 	}
@@ -43,7 +43,7 @@ class dm_puppet_inventory_service extends device_module
 	 * 
 	 * @return void
 	 */
-	function init($request = array())
+	public function init($request = array())
 	{
 		if (isset($this->device)) {
 			$this->metas = device_metadata($this->device);
@@ -62,7 +62,7 @@ class dm_puppet_inventory_service extends device_module
 	 * 
 	 * @return string
 	 **/
-	function summary($request = array())
+	public function summary($request = array())
 	{
 		$this->init($request);
 		
@@ -152,7 +152,7 @@ class dm_puppet_inventory_service extends device_module
 	 *
 	 * @return array
 	 **/
-	function config_items()
+	public function config_items()
 	{
 		return array(
 			'pis_baseurl'	=> array(
