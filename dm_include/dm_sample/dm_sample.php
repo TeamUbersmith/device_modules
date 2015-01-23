@@ -17,7 +17,7 @@
  *
  * @package ubersmith_customizations
  */
-class dm_mydevicemodule extends device_module
+class dm_sample extends device_module
 {
 	/**
 	 * Device Module Title
