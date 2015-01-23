@@ -83,10 +83,16 @@ class dm_sample extends device_module
 		$output .= 'Configured username is: ' . h($username) . '<br />';
 
 		foreach ($device as $key => $value) {
+			if (is_array($value)) {
+				$value = implode(',', $value);
+			}
 			$output .= h($key) . ' = ' . h($value) . '<br />';
 		}
 
 		foreach ($metas as $key => $value) {
+			if (is_array($value)) {
+				$value = implode(',', $value);
+			}
 			$output .= h($key) . ' = ' . h($value) . '<br />';
 		}
 
