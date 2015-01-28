@@ -6,8 +6,7 @@
  * You will want to change dm_mydevicemodule to something a little more
  * descriptive, however be sure to retain the dm_ prefix.
  *
- * When complete, place your finished device module into
- * include/device_modules/
+ * When complete, place your finished module into include/device_modules/
  *
  * @package ubersmith_customizations
  */
