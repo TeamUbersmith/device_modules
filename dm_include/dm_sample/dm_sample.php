@@ -125,6 +125,7 @@ class dm_sample extends device_module
 			}
 			
 			$(function() {
+				// Immediately call the change_case() function to populate the dm_sample_x div
 				change_case();
 			});
 		</script>';
