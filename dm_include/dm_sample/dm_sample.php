@@ -96,6 +96,40 @@ class dm_sample extends device_module
 		// Initialize output string, so you can begin building it
 		$output = '';
 		
+		// Put JavaScript code at the top
+		$output = '
+		<script type="text/javascript" language="JavaScript">
+			function change_case() {
+				var id = '. j('#dm_sample_'. $this->id .'_content') .';
+				$(id).each(function() {
+					var change_case_input = $("#change_case_input_'. $this->id .'").val();
+					
+					if (!$(this).data("loading")) {
+						$(this).data("loading",$(this).html());
+					}
+					$(this).html($(this).data("loading"));
+					
+					$.ajax({
+						type: "GET",
+						dataType: "html",
+						url: "ajax.device_module_call.php?device='. u($this->device['dev']) .'&device_module='. u($this->id) .'&function=ajax_change_case&change_case_input=" + change_case_input,
+						success: function(msg) {
+							$(id).removeClass("error").html(msg);
+						},
+						error: function(xhr,status,err) {
+							var msg = uber_ajax_error_string(xhr,status,err);
+							$(id).addClass("error").text(h(msg));
+						}
+					});
+				});
+				return false;
+			}
+			
+			$(function() {
+				change_case();
+			});
+		</script>';
+		
 		// Display date
 		$output .= '<p>'. date('l, M j Y') .'</p>';
 		
@@ -119,6 +153,20 @@ class dm_sample extends device_module
 		foreach ($metadata as $metadata_item) {
 			$output .= '<p>'. htmlentities($metadata_item['variable']) . ': ' . htmlentities($metadata_item['value']) . '</p>';
 		}
+		
+		// Designate div for AJAX-loaded content.
+		// We use the Device Module ID when naming a DOM ID. 
+		// This helps us target this specific control without conflicts.
+		$output .= '<div id="dm_sample_'. $this->id .'_content"><div style="padding:20px;text-align:center;">'. gui::img('/images/loading.gif') .' '. h(uber_i18n('Loading...')) .'</div></div>';
+		
+		// Create a simple form and text box for input.
+		$output .= '
+			<form name="change_case_form" id="change_case_form">
+				<input id="change_case_input_'. $this->id .'" type="text" name="change_case_input" value="Mixed-Case String Here">
+			</form>';
+		
+		// Trigger an AJAX call with a link, whose output is based on contents of the above text box
+		$output .= '<p><a href="#" onclick="return change_case();">'. 'Change Case' .'</a></p>';
 		
 		return $output;
 	}
@@ -443,6 +491,48 @@ class dm_sample extends device_module
 	public function onbeforedelete($request = [], $flags = [])
 	{
 		// Do something
+	}
+	
+	/**
+	 * AJAX Content Response
+	 *
+	 * This method responds to an AJAX call with HTML content for the module.
+	 * This method can be named almost anything; you'll just need to make the appropriate 
+	 * AJAX call to it, as illustrated above in the summary() method.
+	 *
+	 * This method is optional.
+	 */
+	function ajax_change_case($request = array())
+	{
+		// Validate input in $request array
+		if (empty($request['change_case_input'])) {
+			return PEAR::raiseError(uber_i18nf('No %s specified','change_case_input'),1);
+		}
+		
+		// Make some API call based on input, or massage data in some way here
+		$data_uppercase = strtoupper($request['change_case_input']);
+		$data_lowercase = strtolower($request['change_case_input']);
+		
+		// Then, generate some HTML to return
+		$output = '
+	<table width="100%" border="0" cellpadding="3" cellspacing="0">
+		<tr>
+			<td width="100%">
+				<table width="100%" border="0" cellpadding="3" cellspacing="0" style="border-right: 1px solid #cccccc;">
+					<tr>
+						<td width="35%"><strong>'. htmlentities('Uppercase version of input') .':</strong></td>
+						<td>'. htmlentities($data_uppercase) .'</td>
+					</tr>
+					<tr>
+						<td><strong>'. htmlentities('Lowercase version of input') .':</strong></td>
+						<td>'. htmlentities($data_lowercase) .'</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>';
+		
+		return $output;
 	}
 }
 
