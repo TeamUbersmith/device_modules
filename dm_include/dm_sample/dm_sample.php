@@ -95,7 +95,7 @@ class dm_sample extends device_module
 		// Initialize output string, so you can begin building it
 		$output = '';
 		
-		// Put JavaScript code at the top
+		// Put JavaScript code at the top (jQuery is also available)
 		$output = '
 		<script type="text/javascript" language="JavaScript">
 			function change_case() {
