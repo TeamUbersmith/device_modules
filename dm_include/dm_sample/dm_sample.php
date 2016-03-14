@@ -1,5 +1,4 @@
 <?php
-// TODO: maybe demo ajax device module call?
 /**
  * My Device Module
  */
