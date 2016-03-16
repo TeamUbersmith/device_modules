@@ -108,6 +108,8 @@ class dm_sample extends device_module
 					}
 					$(this).html($(this).data("loading"));
 					
+					// Call the Device Module AJAX endpoint, specifying the function
+					// name as "ajax_change_case"
 					$.ajax({
 						type: "GET",
 						dataType: "html",
