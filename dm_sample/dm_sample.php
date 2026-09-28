@@ -17,9 +17,6 @@
  */
 class dm_sample extends device_module
 {
-	// Set namespace for device storage (please rename this to something unique)
-	const STORAGE_NAMESPACE = 'my_device_module';
-	
 	/**
 	 * Device Module Title
 	 *
@@ -57,17 +54,14 @@ class dm_sample extends device_module
 				]
 			);
 			
-			// Load device storage items in a class variable.
-			$this->conf = $this->edit_items();
-			foreach ($this->conf as $key => $value) {
-				$this->conf[$key] = uber_api::call(
-					'device.storage_get',
-					[
-						'device_id' => $this->device['dev'],
-						'item'      => self::STORAGE_NAMESPACE .'.'. $key,
-					]
-				);
+			// Load device storage items in a class variable. storage_getmulti()
+			// automatically namespaces items to this module (see build_storage_key()
+			// in the base class), so there's no need to prefix keys yourself.
+			$defaults = [];
+			foreach ($this->edit_items() as $key => $item) {
+				$defaults[$key] = isset($item['default']) ? $item['default'] : null;
 			}
+			$this->conf = $this->storage_getmulti($defaults);
 		}
 	}
 
@@ -81,8 +75,12 @@ class dm_sample extends device_module
 	 *  - Display retrieved information
 	 *  - Provide a link to an external portal or page
 	 *  - Trigger some functionality or configuration within Ubersmith itself
+	 *
+	 * $show_errors controls whether secondary/verbose output is included.
+	 * Callers such as the Rack View pass false to keep the panel compact
+	 * (see admin/devicemgr/ajax.rack_view.php).
 	 */
-	public function summary($request = [])
+	public function summary($request = [], $show_errors = true)
 	{
 		/*
 		 * These two lines request the metadata for the device, which can
@@ -138,22 +136,26 @@ class dm_sample extends device_module
 		// Display external link
 		$output .= '<p><a href="https://www.google.com/search?q=account '. urlencode($this->conf['account']) .', sub_account '. urlencode($this->conf['sub_account']) .'" target="_blank">'. 'Login to Portal' .'</a></p>';
 		
-		// Display Device Module configuration from Setup & Admin
-		$output .= '<p><strong>Device Module Configuration:</strong></p>';
-		
-		// $this->config() pulls the whole configuration from Setup & Admin,
-		// but you can also access individual items using $this->config('variable')
-		$config = $this->config();
-		foreach ($config as $key => $value) {
-			// Loop through all config items and display them...
-			// Note the use of htmlentities() for special characters
-			$output .= htmlentities($key) .': '. htmlentities($value) . '<br/>';
-		}
-		
-		// Display Device Metadata (Custom Data)
-		$output .= '<p><em>Device Custom Data:</em></p>';
-		foreach ($metadata as $metadata_item) {
-			$output .= '<p>'. htmlentities($metadata_item['variable']) . ': ' . htmlentities($metadata_item['value']) . '</p>';
+		// This secondary/verbose detail is skipped when $show_errors is false,
+		// e.g. when rendered compactly in the Rack View.
+		if ($show_errors) {
+			// Display Device Module configuration from Setup & Admin
+			$output .= '<p><strong>Device Module Configuration:</strong></p>';
+
+			// $this->config() pulls the whole configuration from Setup & Admin,
+			// but you can also access individual items using $this->config('variable')
+			$config = $this->config();
+			foreach ($config as $key => $value) {
+				// Loop through all config items and display them...
+				// Note the use of htmlentities() for special characters
+				$output .= htmlentities($key) .': '. htmlentities($value) . '<br/>';
+			}
+
+			// Display Device Metadata (Custom Data)
+			$output .= '<p><em>Device Custom Data:</em></p>';
+			foreach ($metadata as $metadata_item) {
+				$output .= '<p>'. htmlentities($metadata_item['variable']) . ': ' . htmlentities($metadata_item['value']) . '</p>';
+			}
 		}
 		
 		// Designate div for AJAX-loaded content.
@@ -304,30 +306,14 @@ class dm_sample extends device_module
 		while (!empty($request['editclick'])) {
 			// Ensure password is stored in an encrypted state
 			if (isset($update['password'])) {
-				uber_api::call(
-					'device.storage_set',
-					[
-						'device_id' => $this->device['dev'],
-						'item'      => self::STORAGE_NAMESPACE .'.password',
-						'value'     => $update['password'],
-						'encrypt'   => true, // We want encryption for the password!
-					]
-				);
-				
+				$this->storage_set('password',$update['password'],true); // We want encryption for the password!
+
 				unset($update['password']); // Important! Do not store password in plain text.
 			}
-			
-			foreach ($update as $key => $value) {
-				// We can store the rest of this data unencrypted
-				uber_api::call(
-					'device.storage_set',
-					[
-						'device_id' => $this->device['dev'],
-						'item'      => self::STORAGE_NAMESPACE .'.'. $key,
-						'value'     => $value,
-					]
-				);
-			}
+
+			// We can store the rest of this data unencrypted. storage_set()
+			// accepts an array of item => value pairs to store them all at once.
+			$this->storage_set($update);
 			
 			$msg = uber_i18nf('%s updated',self::title());
 			$output .= display_success(uber_i18n('Success'),$msg);
